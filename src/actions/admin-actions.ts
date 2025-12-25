@@ -40,7 +40,7 @@ export async function getAllDonationCenters() {
 
 export async function createDonationCenter(data: {
   name: string;
-  type: string;
+  type: "center" | "hospital" | "camp" | "mobile";
   address: string;
   city: string;
   phone: string;
@@ -73,7 +73,7 @@ export async function updateDonationCenter(
   centerId: string,
   data: Partial<{
     name: string;
-    type: string;
+    type: "center" | "hospital" | "camp" | "mobile";
     address: string;
     city: string;
     phone: string;

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 
 // Better Auth Tables
 export const user = pgTable("user", {
@@ -19,7 +19,12 @@ export const user = pgTable("user", {
   city: text("city"),
   citizenId: text("citizenId").unique(),
   isVerified: boolean("isVerified").default(false).notNull(),
+  
+  // Donor stats
+  lastDonationDate: timestamp("lastDonationDate"),
+  totalDonations: integer("totalDonations").default(0).notNull(),
 });
+
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),

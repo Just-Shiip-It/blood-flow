@@ -1,116 +1,128 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useAuth } from "@/hooks/use-auth";
-import { Heart } from "lucide-react";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
-
-const signUpSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
-
-type SignUpValues = z.infer<typeof signUpSchema>;
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Droplet, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { authClient } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
 
 export default function SignUpPage() {
-  const { signUp, isLoading } = useAuth();
-  
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignUpValues>({
-    resolver: zodResolver(signUpSchema),
-  });
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await authClient.signUp.email({
+        email,
+        password,
+        name,
+      });
+      
+      if (result.error) {
+        setError(result.error.message || 'Something went wrong. Please try again.');
+        setLoading(false);
+      } else {
+        // Success - redirect to dashboard
+        router.push('/dashboard');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong. Please try again.');
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
-      <div className="w-full max-w-md space-y-8 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-border">
-        <div className="text-center">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <Heart className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold tracking-tighter">Vitals</span>
-          </Link>
-          <h2 className="text-3xl font-bold tracking-tight">Create an account</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Join our community and start saving lives today.
-          </p>
-        </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(signUp)}>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Full Name</label>
-              <input
-                {...register("name")}
-                className={cn(
-                  "w-full px-4 py-2 rounded-lg border bg-background outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary",
-                  errors.name && "border-destructive focus:ring-destructive/20"
-                )}
-                placeholder="John Doe"
-              />
-              {errors.name && (
-                <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>
-              )}
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium mb-1 block">Email address</label>
-              <input
-                {...register("email")}
-                type="email"
-                className={cn(
-                  "w-full px-4 py-2 rounded-lg border bg-background outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary",
-                  errors.email && "border-destructive focus:ring-destructive/20"
-                )}
-                placeholder="john@example.com"
-              />
-              {errors.email && (
-                <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
-              )}
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium mb-1 block">Password</label>
-              <input
-                {...register("password")}
-                type="password"
-                className={cn(
-                  "w-full px-4 py-2 rounded-lg border bg-background outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary",
-                  errors.password && "border-destructive focus:ring-destructive/20"
-                )}
-                placeholder="••••••••"
-              />
-              {errors.password && (
-                <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>
-              )}
-            </div>
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-rose-50 px-4 py-12">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md relative"
+      >
+        <Link href="/" className="absolute top-6 left-6 text-gray-400 hover:text-gray-600 transition-colors">
+           <ArrowLeft size={24} />
+        </Link>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full btn-primary py-3 flex items-center justify-center"
-          >
-            {isLoading ? (
-              <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              "Sign Up"
-            )}
-          </button>
+        <div className="text-center mb-8">
+           <div className="inline-flex p-3 bg-rose-100 text-rose-600 rounded-xl mb-4">
+            <Droplet size={32} className="fill-current" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 font-serif">Join LifeFlow</h2>
+          <p className="text-gray-500">Become a donor and save lives</p>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3 text-rose-700 text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p>{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700" htmlFor="name">Full Name</label>
+            <Input 
+              id="name"
+              type="text" 
+              placeholder="John Doe"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="rounded-xl border-gray-200 focus:ring-rose-200 focus:border-rose-500"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700" htmlFor="email">Email Address</label>
+            <Input 
+              id="email"
+              type="email" 
+              placeholder="john@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="rounded-xl border-gray-200 focus:ring-rose-200 focus:border-rose-500"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700" htmlFor="password">Password</label>
+            <Input 
+              id="password"
+              type="password" 
+              placeholder="Create a password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="rounded-xl border-gray-200 focus:ring-rose-200 focus:border-rose-500"
+            />
+          </div>
+          
+          <Button className="w-full h-12 text-base font-bold rounded-xl bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-200 mt-4" type="submit" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Account...
+              </>
+            ) : 'Register'}
+          </Button>
         </form>
 
-        <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/sign-in" className="text-primary hover:underline font-medium">
+        <p className="mt-8 text-center text-sm text-gray-600">
+          Already have an account?{' '}
+          <Link href="/sign-in" className="text-rose-600 font-bold hover:underline">
             Sign In
           </Link>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }

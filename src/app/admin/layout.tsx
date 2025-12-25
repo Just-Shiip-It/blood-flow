@@ -1,19 +1,30 @@
-import React from "react";
-import { AdminLayoutShell } from "@/components/layouts/admin-layout-shell";
-import { checkRole } from "@/lib/auth-utils";
-import { UserRole } from "@/lib/constants";
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/auth-utils';
+import { AdminShell } from '@/components/layouts/admin-shell';
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Ensure user is authenticated and has admin role
-  await checkRole([UserRole.ADMIN]);
+  const session = await getSession();
+
+  if (!session) {
+    redirect('/sign-in');
+  }
+
+  if (session.user.role !== 'admin') {
+    if (session.user.role === 'donor') {
+      redirect('/dashboard');
+    } else if (session.user.role === 'staff') {
+      redirect('/hospital/dashboard');
+    }
+    redirect('/');
+  }
 
   return (
-    <AdminLayoutShell>
+    <AdminShell>
       {children}
-    </AdminLayoutShell>
+    </AdminShell>
   );
 }

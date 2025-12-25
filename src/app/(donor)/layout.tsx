@@ -1,22 +1,29 @@
-import React from "react";
-import { DonorLayoutShell } from "@/components/layouts/donor-layout-shell";
-import { requireAuth } from "@/lib/auth-utils";
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/auth-utils';
+import { DonorShell } from '../../components/donor/donor-shell';
 
 export default async function DonorLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Ensure user is authenticated
-  await requireAuth();
-  
-  // Note: We don't strict-check "donor" role here because admins/staff 
-  // might want to view the donor dashboard for testing or debugging.
-  // But typically checking for authenticated user is enough for the generic "user" area.
+  const session = await getSession();
+
+  if (!session) {
+    redirect('/sign-in');
+  }
+
+  if (session.user.role !== 'donor') {
+    if (session.user.role === 'admin') {
+      redirect('/admin');
+    } else if (session.user.role === 'staff') {
+      redirect('/hospital/dashboard');
+    }
+  }
 
   return (
-    <DonorLayoutShell>
+    <DonorShell>
       {children}
-    </DonorLayoutShell>
+    </DonorShell>
   );
 }

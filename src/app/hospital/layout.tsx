@@ -1,19 +1,30 @@
-import React from "react";
-import { HospitalLayoutShell } from "@/components/layouts/hospital-layout-shell";
-import { checkRole } from "@/lib/auth-utils";
-import { UserRole } from "@/lib/constants";
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/auth-utils';
+import { HospitalShell } from '@/components/layouts/hospital-shell';
 
 export default async function HospitalLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Ensure user is authenticated and has staff or admin role
-  await checkRole([UserRole.STAFF, UserRole.ADMIN]);
+  const session = await getSession();
+
+  if (!session) {
+    redirect('/sign-in');
+  }
+
+  if (session.user.role !== 'staff') {
+    if (session.user.role === 'donor') {
+      redirect('/dashboard');
+    } else if (session.user.role === 'admin') {
+      redirect('/admin');
+    }
+    redirect('/');
+  }
 
   return (
-    <HospitalLayoutShell>
+    <HospitalShell>
       {children}
-    </HospitalLayoutShell>
+    </HospitalShell>
   );
 }

@@ -3,10 +3,14 @@ import { auth } from "./auth";
 import { redirect } from "next/navigation";
 import { UserRole } from "./constants";
 
-export async function getCurrentUser() {
-  const session = await auth.api.getSession({
+export async function getSession() {
+  return await auth.api.getSession({
     headers: await headers(),
   });
+}
+
+export async function getCurrentUser() {
+  const session = await getSession();
   return session?.user;
 }
 

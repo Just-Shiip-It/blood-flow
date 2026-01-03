@@ -21,8 +21,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Get session cookie from Better Auth
-  const sessionToken = request.cookies.get("better-auth.session_token");
+  // Get session cookie from Better Auth (check both regular and secure versions)
+  const sessionToken = request.cookies.get("better-auth.session_token") || request.cookies.get("__Secure-better-auth.session_token");
 
   if (!sessionToken && (isProtectedRoute || isHospitalRoute || isAdminRoute)) {
     // Redirect to sign-in if no session

@@ -99,3 +99,17 @@
     @apply bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium transition-all hover:opacity-90 active:scale-95 disabled:opacity-50;
   }
 }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-rose-50;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-rose-300 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-rose-500;
+}

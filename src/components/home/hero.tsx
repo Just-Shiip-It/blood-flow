@@ -51,15 +51,17 @@ export const Hero: React.FC = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button asChild size="lg" className="shadow-xl shadow-rose-500/20 px-8 h-14 text-lg bg-rose-600 hover:bg-rose-700">
+              <Button asChild size="lg" className="shadow-xl shadow-rose-500/20 px-8 h-14 text-lg bg-rose-600 hover:bg-rose-700 text-white border-none">
                 <Link href="/schedule">
                   Book Appointment
                   <ChevronRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
               
-              <Button variant="outline" size="lg" className="h-14 text-lg border-slate-200 text-slate-700">
-                Check Eligibility
+              <Button asChild variant="outline" size="lg" className="h-14 text-lg border-slate-200 text-slate-700 bg-white hover:bg-slate-50">
+                <Link href="/eligibility">
+                    Check Eligibility
+                </Link>
               </Button>
             </div>
             
@@ -86,7 +88,7 @@ export const Hero: React.FC = () => {
           >
             <div className="relative z-10">
                {/* Main Image Card */}
-               <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl shadow-rose-900/10 border-[6px] border-white transform -rotate-2 hover:rotate-0 transition-transform duration-500">
+               <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl shadow-rose-900/10 border-[6px] border-white -rotate-2 hover:rotate-0 transition-transform duration-500">
                   <img 
                     src="https://media.istockphoto.com/id/1757606871/photo/black-businessman-donating-blood-for-people-in-need-in-bright-hospital-female-nurse-with.jpg?s=612x612&w=0&k=20&c=w3PAMMJqOivqa0Z_v21eSIg6MnJD-k-iFeLEwMbKuCE=" 
                     alt="Comfortable blood donation" 
@@ -106,7 +108,7 @@ export const Hero: React.FC = () => {
                         </div>
                         <div>
                            <p className="font-bold text-slate-900 text-lg">&quot;Easier than I thought!&quot;</p>
-                           <p className="text-slate-500 text-sm">Sarah, 12th time donor</p>
+                           <p className="text-slate-500 text-sm">Michel, 12th time donor</p>
                         </div>
                      </div>
                   </motion.div>
@@ -123,5 +125,3 @@ export const Hero: React.FC = () => {
     </div>
   );
 };
-
-export default Hero;

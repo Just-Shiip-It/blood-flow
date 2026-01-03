@@ -84,5 +84,3 @@ export const Process: React.FC = () => {
     </section>
   );
 };
-
-export default Process;

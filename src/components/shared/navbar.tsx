@@ -4,16 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { Droplet, Menu, X, Heart, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
-export function Navbar() {
+interface NavbarProps {
+  isLoggedIn?: boolean;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ isLoggedIn = false }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const pathname = usePathname();
-  const { user } = useAuth();
-  const isLoggedIn = !!user;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,31 +23,27 @@ export function Navbar() {
   }, []);
 
   const navLinks = [
-    { name: 'Why Donate', href: '/#why-donate' },
-    { name: 'Process', href: '/#process' },
-    { name: 'Eligibility', href: '/check-eligibility' }, 
+    { name: 'Why Donate', href: '#why-donate' },
+    { name: 'Process', href: '#process' },
+    { name: 'Eligibility', href: '/#eligibility' },
     { name: 'Blog', href: '/blog' },
   ];
 
   const handleLinkClick = (e: React.MouseEvent, href: string) => {
-    if (pathname === '/' && href.startsWith('/#')) {
-        e.preventDefault();
-        const elementId = href.replace('/#', '');
-        const element = document.getElementById(elementId);
-        element?.scrollIntoView({ behavior: 'smooth' });
+    // If it's an anchor link on the same page, scroll to it
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const element = document.querySelector(href);
+      element?.scrollIntoView({ behavior: 'smooth' });
+      setMobileMenuOpen(false);
     }
-    setMobileMenuOpen(false);
   };
-    
-  const isBlog = pathname?.startsWith('/blog');
-  // Use distinct style for blog or scrolled pages
-  const isTransparent = !isScrolled && !mobileMenuOpen && !isBlog;
 
   return (
     <nav 
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-3",
-        !isTransparent ? "bg-white/95 backdrop-blur-md shadow-sm" : "bg-transparent py-5"
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        isScrolled || mobileMenuOpen ? "bg-white/95 backdrop-blur-md shadow-sm py-3" : "bg-transparent py-5"
       )}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,17 +52,17 @@ export function Navbar() {
           {/* Logo */}
           <Link 
             href="/"
-            className="flex items-center space-x-2 cursor-pointer"
+            className="flex items-center space-x-2"
           >
             <div className={cn(
-                "p-2 rounded-lg",
-                 !isTransparent ? "bg-rose-50 text-rose-600" : "bg-white text-rose-600"
+              "p-2 rounded-lg transition-colors",
+              isScrolled ? "bg-rose-50 text-rose-600" : "bg-white text-rose-600"
             )}>
               <Droplet className="w-6 h-6 fill-current" />
             </div>
             <span className={cn(
-                "text-2xl font-bold font-serif tracking-tight",
-                !isTransparent ? "text-gray-900" : "text-gray-900 bg-white/50 backdrop-blur-sm px-2 rounded-lg"
+              "text-2xl font-bold font-serif tracking-tight",
+              isScrolled ? "text-slate-900" : "text-slate-900" 
             )}>
               LifeFlow
             </span>
@@ -76,37 +71,36 @@ export function Navbar() {
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
-              <Link 
+              <a 
                 key={link.name} 
                 href={link.href} 
                 onClick={(e) => handleLinkClick(e, link.href)}
                 className={cn(
-                    "text-sm font-medium transition-colors hover:text-rose-600",
-                    (isBlog && link.href === '/blog') ? "text-rose-600 font-bold" : 
-                    !isTransparent ? "text-gray-600" : "text-gray-800"
+                  "text-sm font-medium hover:text-rose-600 transition-colors",
+                  isScrolled ? "text-slate-600" : "text-slate-700"
                 )}
               >
                 {link.name}
-              </Link>
+              </a>
             ))}
           </div>
 
           {/* CTA */}
           <div className="hidden md:block">
             {isLoggedIn ? (
-                <Button size="sm" variant={!isTransparent ? "outline" : "secondary"} asChild>
-                    <Link href="/dashboard">
-                        <User className="w-4 h-4 mr-2" />
-                        My Portal
-                    </Link>
-                </Button>
+              <Button size="sm" variant="outline" asChild>
+                <Link href="/dashboard">
+                  <User className="w-4 h-4 mr-2" />
+                  My Portal
+                </Link>
+              </Button>
             ) : (
-                <Button size="sm" variant={!isTransparent ? "default" : "default"}  className="shadow-none" asChild>
-                    <Link href="/sign-in">
-                        <Heart className="w-4 h-4 mr-2 fill-current" />
-                        Sign In
-                    </Link>
-                </Button>
+              <Button size="sm" className="shadow-none" asChild>
+                 <Link href="/sign-in">
+                    <Heart className="w-4 h-4 mr-2 fill-current" />
+                    Sign In
+                 </Link>
+              </Button>
             )}
           </div>
 
@@ -114,7 +108,7 @@ export function Navbar() {
           <div className="md:hidden">
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-gray-600 hover:text-gray-900 p-2"
+              className="text-slate-600 hover:text-slate-900 p-2"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -124,26 +118,26 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 absolute w-full left-0 top-full shadow-lg h-screen animate-in slide-in-from-top-2 duration-200">
+        <div className="md:hidden bg-white border-t border-slate-100 absolute w-full left-0 top-full shadow-lg h-screen animate-in slide-in-from-top-2">
           <div className="px-4 py-6 space-y-4">
             {navLinks.map((link) => (
-              <Link 
+              <a 
                 key={link.name} 
                 href={link.href}
-                className="block text-base font-medium text-gray-700 hover:text-rose-600"
+                className="block text-base font-medium text-slate-700 hover:text-rose-600"
                 onClick={(e) => handleLinkClick(e, link.href)}
               >
                 {link.name}
-              </Link>
+              </a>
             ))}
-            <div className="pt-4 border-t border-gray-100">
+            <div className="pt-4 border-t border-slate-100">
                {isLoggedIn ? (
                  <Button className="w-full" asChild>
-                    <Link href="/dashboard">Go to Portal</Link>
+                   <Link href="/dashboard">Go to Portal</Link>
                  </Button>
                ) : (
                  <Button className="w-full" asChild>
-                    <Link href="/sign-in">Sign In</Link>
+                   <Link href="/sign-in">Sign In</Link>
                  </Button>
                )}
             </div>
@@ -152,4 +146,4 @@ export function Navbar() {
       )}
     </nav>
   );
-}
+};

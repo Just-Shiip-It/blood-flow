@@ -3,7 +3,6 @@ import { Stats } from "@/components/home/stats";
 import { Features } from "@/components/home/features";
 import { Process } from "@/components/home/process";
 import { Testimonials } from "@/components/home/testimonials";
-import { Footer } from "@/components/shared/footer";
 import { EligibilityChat } from "@/components/home/eligibility-chat";
 
 export default function MarketingPage() {
@@ -14,7 +13,6 @@ export default function MarketingPage() {
       <Features />
       <Process />
       <Testimonials />
-      <Footer />
       <EligibilityChat />
     </>
   );

@@ -14,6 +14,7 @@ export const Footer: React.FC = () => {
     if (email) {
       setSubscribed(true);
       setEmail('');
+      // Reset success message after 5 seconds to allow another entry if needed
       setTimeout(() => setSubscribed(false), 5000);
     }
   };
@@ -33,9 +34,9 @@ export const Footer: React.FC = () => {
               Connecting donors with those in need. Safe, fast, and compassionate blood donation services worldwide.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-rose-500 transition-colors"><Facebook className="w-5 h-5" /></a>
-              <a href="#" className="text-gray-400 hover:text-rose-500 transition-colors"><Twitter className="w-5 h-5" /></a>
-              <a href="#" className="text-gray-400 hover:text-rose-500 transition-colors"><Instagram className="w-5 h-5" /></a>
+              <Link href="#" className="text-gray-400 hover:text-rose-500 transition-colors"><Facebook className="w-5 h-5" /></Link>
+              <Link href="#" className="text-gray-400 hover:text-rose-500 transition-colors"><Twitter className="w-5 h-5" /></Link>
+              <Link href="#" className="text-gray-400 hover:text-rose-500 transition-colors"><Instagram className="w-5 h-5" /></Link>
             </div>
           </div>
 
@@ -43,10 +44,10 @@ export const Footer: React.FC = () => {
           <div>
             <h4 className="text-lg font-bold mb-6">Quick Links</h4>
             <ul className="space-y-4 text-gray-400">
-              <li><Link href="#" className="hover:text-white transition-colors">About Us</Link></li>
-              <li><Link href="#process" className="hover:text-white transition-colors">Donation Process</Link></li>
-              <li><Link href="/schedule" className="hover:text-white transition-colors">Book Appointment</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Eligibility Requirements</Link></li>
+              <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
+              <li><Link href="/#process" className="hover:text-white transition-colors">Donation Process</Link></li>
+              <li><Link href="/locations" className="hover:text-white transition-colors">Locate a Center</Link></li>
+              <li><Link href="/eligibility" className="hover:text-white transition-colors">Eligibility Requirements</Link></li>
             </ul>
           </div>
 
@@ -92,7 +93,7 @@ export const Footer: React.FC = () => {
                     className="bg-gray-800 text-white border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-rose-500 outline-none placeholder-gray-500"
                     required
                   />
-                  <Button className="w-full bg-rose-600 hover:bg-rose-700" type="submit">Subscribe</Button>
+                  <Button className="w-full bg-rose-600 hover:bg-rose-700 text-white" type="submit">Subscribe</Button>
                 </>
               )}
             </form>
@@ -102,13 +103,11 @@ export const Footer: React.FC = () => {
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-gray-500 text-sm">
           <p>&copy; 2024 LifeFlow Organization. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <Link href="#" className="hover:text-white">Privacy Policy</Link>
-            <Link href="#" className="hover:text-white">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-white">Terms of Service</Link>
           </div>
         </div>
       </div>
     </footer>
   );
 };
-
-export default Footer;

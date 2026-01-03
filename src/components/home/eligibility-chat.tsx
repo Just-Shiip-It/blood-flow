@@ -1,38 +1,38 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Sparkles } from 'lucide-react';
+import { MessageCircle, X, Send, Sparkles } from 'lucide-react'; // Removing User unused import
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface ChatMessage {
-  id: string;
-  role: 'user' | 'model';
-  text: string;
-  timestamp: Date;
-}
-
-// Static responses for demo (Gemini AI integration can be added later)
-const getStaticResponse = (input: string): string => {
-  const lowerInput = input.toLowerCase();
-  
-  if (lowerInput.includes('eligib') || lowerInput.includes('can i donate')) {
-    return "To be eligible to donate blood, you generally need to be: at least 17 years old (16 with parental consent in some states), weigh at least 110 lbs, and be in good general health. Would you like me to explain more specific requirements?";
-  }
-  if (lowerInput.includes('how long') || lowerInput.includes('time')) {
-    return "The entire blood donation process takes about 1 hour, but the actual donation only takes 8-10 minutes. This includes registration, a mini-physical, the donation itself, and refreshments afterward.";
-  }
-  if (lowerInput.includes('hurt') || lowerInput.includes('pain') || lowerInput.includes('needle')) {
-    return "Most donors feel only a brief pinch when the needle is inserted. Our trained staff are very gentle and experienced. Many first-time donors are surprised how easy it is!";
-  }
-  if (lowerInput.includes('eat') || lowerInput.includes('food') || lowerInput.includes('drink')) {
-    return "Before donating, eat a healthy meal and drink plenty of water. Avoid fatty foods and alcohol. After donating, enjoy our refreshments and continue hydrating throughout the day.";
-  }
-  if (lowerInput.includes('often') || lowerInput.includes('frequently') || lowerInput.includes('wait')) {
-    return "You can donate whole blood every 56 days (about 8 weeks). Platelet donors can give more frequently, up to 24 times per year. Power Red donations require a 112-day wait.";
-  }
-  
-  return "Thanks for your question! For specific medical eligibility questions, I recommend speaking with our staff at the donation center. They can provide personalized guidance. Is there anything else I can help with about the donation process?";
+// Mock service since the original was in an external file
+const getChatResponse = async (text: string): Promise<string> => {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Simple keyword-based mock interactions
+    const lower = text.toLowerCase();
+    if (lower.includes('eligible') || lower.includes('can i donate')) {
+        return "To be eligible, you generally need to be at least 17 years old, weigh at least 110 lbs, and be in good health. Have you donated before?";
+    }
+    if (lower.includes('age') || lower.includes('old')) {
+        return "You must be at least 17 years old to donate in most states (16 with parental consent in some areas). There is no upper age limit as long as you are healthy!";
+    }
+    if (lower.includes('weight')) {
+        return "Donors must weigh at least 110 lbs (50 kg) to ensure donor safety.";
+    }
+    if (lower.includes('food') || lower.includes('eat')) {
+        return "It's important to eat a healthy meal and drink plenty of water before your appointment. Avoid fatty foods just before donating.";
+    }
+    
+    return "That's a great question. While I'm an AI assistant, I recommend checking our detailed eligibility page or speaking with a nurse at the center for specific medical questions. Would you like to schedule a screening?";
 };
+
+interface ChatMessage {
+    id: string;
+    role: 'user' | 'model';
+    text: string;
+    timestamp: Date;
+}
 
 export const EligibilityChat: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -70,18 +70,27 @@ export const EligibilityChat: React.FC = () => {
     setInputValue('');
     setIsLoading(true);
 
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    const responseText = getStaticResponse(userMsg.text);
-    const modelMsg: ChatMessage = {
-      id: (Date.now() + 1).toString(),
-      role: 'model',
-      text: responseText,
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, modelMsg]);
-    setIsLoading(false);
+    try {
+      const responseText = await getChatResponse(userMsg.text);
+      const modelMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'model',
+        text: responseText,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, modelMsg]);
+    } catch (error) {
+      console.error(error);
+      // Fallback
+      setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: 'model',
+          text: "I'm having trouble connecting right now. Please try again later.",
+          timestamp: new Date()
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -116,7 +125,7 @@ export const EligibilityChat: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-sm">LifeFlow Assistant</h3>
-                  <p className="text-xs text-rose-100">Here to help</p>
+                  <p className="text-xs text-rose-100">Powered by Gemini AI</p>
                 </div>
               </div>
               <button 
@@ -166,7 +175,7 @@ export const EligibilityChat: React.FC = () => {
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                   placeholder="Ask about eligibility..."
-                  className="flex-1 bg-gray-100 border-0 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all outline-none"
+                  className="flex-1 bg-gray-100 border-0 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all text-slate-800"
                 />
                 <button 
                   onClick={handleSend}
@@ -177,7 +186,7 @@ export const EligibilityChat: React.FC = () => {
                 </button>
               </div>
               <p className="text-[10px] text-center text-gray-400 mt-2">
-                This is a demo assistant. Consult a medical professional for advice.
+                AI can make mistakes. Consult a medical professional.
               </p>
             </div>
           </motion.div>
@@ -186,5 +195,3 @@ export const EligibilityChat: React.FC = () => {
     </>
   );
 };
-
-export default EligibilityChat;

@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Heart, Shield, Smile } from 'lucide-react';
+import { Heart, Shield, Activity, Smile } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export const Features: React.FC = () => {
   return (
@@ -69,7 +70,9 @@ export const Features: React.FC = () => {
                ))}
             </div>
 
-            <Button variant="outline" size="lg">Learn More About Impact</Button>
+            <Button variant="outline" size="lg" asChild>
+                <Link href="/impact">Learn More About Impact</Link>
+            </Button>
           </motion.div>
 
         </div>
@@ -77,5 +80,3 @@ export const Features: React.FC = () => {
     </section>
   );
 };
-
-export default Features;

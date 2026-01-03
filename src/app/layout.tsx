@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Merriweather } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const merriweather = Merriweather({ 
+  subsets: ["latin"], 
+  weight: ["300", "400", "700", "900"],
+  variable: "--font-serif" 
+});
 
 export const metadata: Metadata = {
   title: "Vitals | Blood Donation Management System",
@@ -17,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${merriweather.variable} font-sans antialiased`}>
         <QueryProvider>
           {children}
         </QueryProvider>

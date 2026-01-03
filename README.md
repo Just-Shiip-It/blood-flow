@@ -2,7 +2,7 @@
 
 LifeFlow is a comprehensive, open-source blood donation management system designed to bridge the gap between donors, hospitals, and blood banks. It streamlines the donation process, manages inventory in real-time, and provides actionable insights for healthcare administrators.
 
-![LifeFlow Banner](/public/demo.mp4)
+![LifeFlow Banner](/public/Screenshot%202025-12-25%20220606.png)
 
 ## 🚀 Features
 

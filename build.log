@@ -1,0 +1,27 @@
+
+> vitals@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.1 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 1 errors:
+./src/app/(marketing)/layout.tsx:1:1
+Module not found: Can't resolve '@/components/shared/navbar'
+> 1 | import { Navbar } from "@/components/shared/navbar";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 | import { Footer } from "@/components/shared/footer";
+  3 |
+  4 | export default function MarketingLayout({
+
+Import map: aliased to relative './src/components/shared/navbar' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (./src/app/(marketing)/layout.tsx:1:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)

@@ -24,7 +24,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: 'Editorial Team',
     category: 'Stories',
     readTime: '6 min read',
-    imageUrl: 'https://images.unsplash.com/photo-1516574187841-69301976e499?q=80&w=2070&auto=format&fit=crop',
+    imageUrl: 'https://thumbs.dreamstime.com/b/blood-donation-give-life-transfusion-sangre-concept-77459516.jpg?w=992',
     tags: ['Community', 'Impact', 'Patient Stories'],
     content: (
       <>
@@ -65,7 +65,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: 'Dr. Sarah',
     category: 'Wellness',
     readTime: '4 min read',
-    imageUrl: 'https://images.unsplash.com/photo-1544367563-12123d8965cd?q=80&w=2070&auto=format&fit=crop',
+    imageUrl: 'https://plus.unsplash.com/premium_photo-1723114841540-0189f6449713?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     tags: ['Health', 'Nutrition', 'Tips'],
     content: (
       <>
@@ -117,7 +117,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: 'Medical Board',
     category: 'Science',
     readTime: '8 min read',
-    imageUrl: 'https://images.unsplash.com/photo-1615461166324-6412d8d19aa5?q=80&w=2070&auto=format&fit=crop',
+    imageUrl: 'https://cdn.pixabay.com/photo/2020/04/17/08/09/blood-5053760_1280.jpg',
     tags: ['Science', 'Education', 'Blood Facts'],
     content: (
       <>

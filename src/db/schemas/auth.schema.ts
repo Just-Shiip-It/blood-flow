@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, uuid } from "drizzle-orm/pg-core";
+import { donationCenters } from "./center.schema";
 
 // Better Auth Tables
 export const user = pgTable("user", {
@@ -11,7 +12,8 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updatedAt").notNull(),
   
   // Custom fields for Vitals
-  role: text("role", { enum: ["donor", "staff", "admin"] }).default("donor").notNull(),
+  role: text("role", { enum: ["donor", "center", "admin"] }).default("donor").notNull(),
+  centerId: uuid("centerId").references(() => donationCenters.id),
   bloodType: text("bloodType", { enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] }),
   dateOfBirth: timestamp("dateOfBirth"),
   phone: text("phone"),

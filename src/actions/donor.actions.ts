@@ -79,6 +79,30 @@ export async function getDonorDashboard(): Promise<DonorDashboardData | null> {
   };
 }
 
+export async function getUpcomingAppointments(userId: string) {
+  // If no userId provided, try current session (though page passes it)
+  if (!userId) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return [];
+    userId = currentUser.id;
+  }
+
+  const upcoming = await db
+    .select()
+    .from(appointments)
+    .innerJoin(donationCenters, eq(appointments.centerId, donationCenters.id))
+    .where(
+      and(
+        eq(appointments.donorId, userId),
+        eq(appointments.status, "scheduled"),
+        gte(appointments.scheduledDate, new Date())
+      )
+    )
+    .orderBy(appointments.scheduledDate);
+
+  return upcoming.map((r) => ({ ...r.appointments, center: r.donation_centers }));
+}
+
 export async function getDonationHistory(): Promise<DonationHistoryItem[]> {
   const currentUser = await getCurrentUser();
   if (!currentUser) return [];

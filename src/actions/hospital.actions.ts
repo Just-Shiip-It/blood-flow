@@ -7,7 +7,6 @@ import {
   donations,
   healthScreenings,
   donationCenters,
-  staff,
   bloodInventory,
 } from "@/db/schema";
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
@@ -20,6 +19,9 @@ export type HospitalDashboardStats = {
   pendingScreenings: number;
   completedToday: number;
   criticalInventory: number;
+  totalAppointments: number;
+  totalDonations: number;
+  weekDonations: number;
 };
 
 export type AppointmentWithDonor = typeof appointments.$inferSelect & {
@@ -28,27 +30,24 @@ export type AppointmentWithDonor = typeof appointments.$inferSelect & {
 
 export type InventoryItem = typeof bloodInventory.$inferSelect;
 
-// --- Helper to get current staff user and their center ---
-async function getCurrentStaffUser() {
+// --- Helper to get current center user and their center ---
+async function getCurrentCenterUser() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id) return null;
 
   const [dbUser] = await db.select().from(user).where(eq(user.id, session.user.id));
-  if (!dbUser || dbUser.role !== "staff") return null;
+  if (!dbUser || dbUser.role !== "center" || !dbUser.centerId) return null;
 
-  const [staffRecord] = await db.select().from(staff).where(eq(staff.userId, dbUser.id));
-  if (!staffRecord) return null;
-
-  return { user: dbUser, staff: staffRecord, centerId: staffRecord.centerId };
+  return { user: dbUser, centerId: dbUser.centerId };
 }
 
 // --- Hospital Actions ---
 
 export async function getHospitalDashboard(): Promise<{ stats: HospitalDashboardStats; center: typeof donationCenters.$inferSelect } | null> {
-  const staffData = await getCurrentStaffUser();
-  if (!staffData) return null;
+  const centerData = await getCurrentCenterUser();
+  if (!centerData) return null;
 
-  const { centerId } = staffData;
+  const { centerId } = centerData;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -80,6 +79,26 @@ export async function getHospitalDashboard(): Promise<{ stats: HospitalDashboard
     .from(bloodInventory)
     .where(and(eq(bloodInventory.centerId, centerId), lte(bloodInventory.unitsAvailable, 10)));
 
+  // Total appointments for this center (all time)
+  const totalAppts = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(appointments)
+    .where(eq(appointments.centerId, centerId));
+
+  // Total donations for this center (all time)
+  const totalDons = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(donations)
+    .where(and(eq(donations.centerId, centerId), eq(donations.status, "completed")));
+
+  // Donations this week
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const weekDons = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(donations)
+    .where(and(eq(donations.centerId, centerId), eq(donations.status, "completed"), gte(donations.donatedAt, weekAgo)));
+
   return {
     center,
     stats: {
@@ -87,15 +106,18 @@ export async function getHospitalDashboard(): Promise<{ stats: HospitalDashboard
       pendingScreenings: Number(pending[0]?.count ?? 0),
       completedToday: Number(completed[0]?.count ?? 0),
       criticalInventory: Number(critical[0]?.count ?? 0),
+      totalAppointments: Number(totalAppts[0]?.count ?? 0),
+      totalDonations: Number(totalDons[0]?.count ?? 0),
+      weekDonations: Number(weekDons[0]?.count ?? 0),
     },
   };
 }
 
 export async function getHospitalAppointments(statusFilter?: string): Promise<AppointmentWithDonor[]> {
-  const staffData = await getCurrentStaffUser();
-  if (!staffData) return [];
+  const centerData = await getCurrentCenterUser();
+  if (!centerData) return [];
 
-  const { centerId } = staffData;
+  const { centerId } = centerData;
 
   let query = db
     .select({
@@ -122,9 +144,45 @@ export async function getHospitalAppointments(statusFilter?: string): Promise<Ap
 }
 
 export async function updateAppointmentStatus(appointmentId: string, newStatus: "scheduled" | "checked_in" | "donating" | "completed" | "cancelled" | "missed") {
-  const staffData = await getCurrentStaffUser();
-  if (!staffData) throw new Error("Unauthorized");
+  const centerData = await getCurrentCenterUser();
+  if (!centerData) throw new Error("Unauthorized");
 
+  const { centerId, user: centerUser } = centerData;
+
+  // Get the appointment to find the donor
+  const [appointment] = await db.select().from(appointments).where(eq(appointments.id, appointmentId));
+  if (!appointment) throw new Error("Appointment not found");
+
+  // If checking in, treat it as a completed donation
+  if (newStatus === "checked_in") {
+    // Mark appointment as completed
+    await db.update(appointments).set({ status: "completed", updatedAt: new Date() }).where(eq(appointments.id, appointmentId));
+
+    // Create donation record
+    await db.insert(donations).values({
+      donorId: appointment.donorId,
+      appointmentId: appointmentId,
+      centerId,
+      processedBy: centerUser.id,
+      status: "completed",
+      donatedAt: new Date(),
+      volumeMl: 450,
+      bagNumber: `BAG-${Date.now()}`,
+    });
+
+    // Update donor's lastDonationDate and increment totalDonations
+    await db.update(user)
+      .set({ 
+        lastDonationDate: new Date(), 
+        totalDonations: sql`${user.totalDonations} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(user.id, appointment.donorId));
+
+    return { success: true, message: "Donation completed and donor history updated" };
+  }
+
+  // For other status changes, just update the status
   await db.update(appointments).set({ status: newStatus, updatedAt: new Date() }).where(eq(appointments.id, appointmentId));
 
   return { success: true };
@@ -143,10 +201,10 @@ export async function createScreeningAndDonation(data: {
     notes?: string;
   };
 }) {
-  const staffData = await getCurrentStaffUser();
-  if (!staffData) throw new Error("Unauthorized");
+  const centerData = await getCurrentCenterUser();
+  if (!centerData) throw new Error("Unauthorized");
 
-  const { centerId, staff: staffRecord } = staffData;
+  const { centerId, user: centerUser } = centerData;
 
   // Create donation record
   const [donation] = await db
@@ -155,7 +213,7 @@ export async function createScreeningAndDonation(data: {
       donorId: data.donorId,
       appointmentId: data.appointmentId,
       centerId,
-      staffId: staffRecord.id,
+      processedBy: centerUser.id,
       status: "completed",
       donatedAt: new Date(),
       volumeMl: 450,
@@ -194,15 +252,15 @@ export async function createScreeningAndDonation(data: {
 }
 
 export async function getHospitalInventory(): Promise<InventoryItem[]> {
-  const staffData = await getCurrentStaffUser();
-  if (!staffData) return [];
+  const centerData = await getCurrentCenterUser();
+  if (!centerData) return [];
 
-  return db.select().from(bloodInventory).where(eq(bloodInventory.centerId, staffData.centerId)).orderBy(bloodInventory.bloodType);
+  return db.select().from(bloodInventory).where(eq(bloodInventory.centerId, centerData.centerId)).orderBy(bloodInventory.bloodType);
 }
 
 export async function updateInventoryUnits(inventoryId: string, newUnits: number) {
-  const staffData = await getCurrentStaffUser();
-  if (!staffData) throw new Error("Unauthorized");
+  const centerData = await getCurrentCenterUser();
+  if (!centerData) throw new Error("Unauthorized");
 
   await db.update(bloodInventory).set({ unitsAvailable: newUnits, lastUpdated: new Date() }).where(eq(bloodInventory.id, inventoryId));
 

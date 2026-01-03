@@ -13,12 +13,12 @@ export type DonationStatus = (typeof DONATION_STATUSES)[number];
 // User roles
 export const UserRole = {
   ADMIN: "admin",
-  STAFF: "staff",
+  CENTER: "center",
   DONOR: "donor",
 } as const;
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
-export const USER_ROLES = [UserRole.DONOR, UserRole.STAFF, UserRole.ADMIN] as const;
+export const USER_ROLES = [UserRole.DONOR, UserRole.CENTER, UserRole.ADMIN] as const;
 
 // Health screening result
 export const SCREENING_RESULTS = ["pass", "fail", "deferred"] as const;

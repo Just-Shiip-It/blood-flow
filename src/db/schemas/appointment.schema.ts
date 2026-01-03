@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, integer, uuid } from "drizzle-orm/pg-core";
 import { user } from "./auth.schema";
-import { donationCenters, staff } from "./center.schema";
+import { donationCenters } from "./center.schema";
 
 export const appointments = pgTable("appointments", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -18,7 +18,7 @@ export const donations = pgTable("donations", {
   donorId: text("donorId").notNull().references(() => user.id),
   appointmentId: uuid("appointmentId").references(() => appointments.id),
   centerId: uuid("centerId").notNull().references(() => donationCenters.id),
-  staffId: uuid("staffId").references(() => staff.id),
+  processedBy: text("processedBy").references(() => user.id), // Center user who processed the donation
   status: text("status", { enum: ["processing", "completed", "rejected"] }).default("processing").notNull(),
   donatedAt: timestamp("donated_at"),
   volumeMl: integer("volume_ml"),

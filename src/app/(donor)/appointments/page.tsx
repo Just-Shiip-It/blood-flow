@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 import Link from "next/link";
-import { getUpcomingAppointments } from "@/actions/donor-actions";
+import { getUpcomingAppointments } from "@/actions/donor.actions";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { requireAuth } from "@/lib/auth-utils";
 import { AppointmentWithCenter } from "@/types";

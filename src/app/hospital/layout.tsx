@@ -13,7 +13,7 @@ export default async function HospitalLayout({
     redirect('/sign-in');
   }
 
-  if (session.user.role !== 'staff') {
+  if (session.user.role !== 'center') {
     if (session.user.role === 'donor') {
       redirect('/dashboard');
     } else if (session.user.role === 'admin') {

@@ -15,6 +15,13 @@
       "when": 1766664405453,
       "tag": "0001_famous_bulldozer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1767428678383,
+      "tag": "0002_yielding_omega_sentinel",
+      "breakpoints": true
     }
   ]
 }

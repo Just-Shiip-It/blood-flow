@@ -1,5 +1,4 @@
 import { pgTable, text, timestamp, boolean, uuid, decimal, jsonb } from "drizzle-orm/pg-core";
-import { user } from "./auth.schema";
 
 export const donationCenters = pgTable("donation_centers", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -18,11 +17,3 @@ export const donationCenters = pgTable("donation_centers", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-
-export const staff = pgTable("staff", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: text("userId").notNull().references(() => user.id),
-  centerId: uuid("centerId").notNull().references(() => donationCenters.id),
-  position: text("position").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});

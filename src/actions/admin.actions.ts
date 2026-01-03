@@ -12,6 +12,9 @@ export type AdminDashboardStats = {
   totalDonations: number;
   activeCenters: number;
   appointmentsThisMonth: number;
+  totalVolumeMl: number;
+  pendingAppointments: number;
+  completedAppointments: number;
 };
 
 export type FacilityItem = typeof donationCenters.$inferSelect;
@@ -45,11 +48,23 @@ export async function getAdminDashboard(): Promise<AdminDashboardStats | null> {
     .from(appointments)
     .where(gte(appointments.createdAt, startOfMonth));
 
+  // Total volume from all donations (in ml)
+  const [volumeSum] = await db.select({ total: sql<number>`COALESCE(SUM(volume_ml), 0)` }).from(donations);
+  
+  // Pending appointments (scheduled status)
+  const [pendingCount] = await db.select({ count: sql<number>`count(*)` }).from(appointments).where(eq(appointments.status, "scheduled"));
+  
+  // Completed appointments
+  const [completedCount] = await db.select({ count: sql<number>`count(*)` }).from(appointments).where(eq(appointments.status, "completed"));
+
   return {
     totalDonors: Number(donorCount?.count ?? 0),
     totalDonations: Number(donationCount?.count ?? 0),
     activeCenters: Number(centerCount?.count ?? 0),
     appointmentsThisMonth: Number(apptCount?.count ?? 0),
+    totalVolumeMl: Number(volumeSum?.total ?? 0),
+    pendingAppointments: Number(pendingCount?.count ?? 0),
+    completedAppointments: Number(completedCount?.count ?? 0),
   };
 }
 
@@ -58,6 +73,38 @@ export async function getAllFacilities(): Promise<FacilityItem[]> {
   if (!admin) return [];
 
   return db.select().from(donationCenters).orderBy(donationCenters.name);
+}
+
+export type CenterStats = {
+  id: string;
+  name: string;
+  city: string;
+  appointmentCount: number;
+  donationCount: number;
+  isActive: boolean;
+};
+
+export async function getCenterStats(): Promise<CenterStats[]> {
+  const admin = await getCurrentAdminUser();
+  if (!admin) return [];
+
+  const centers = await db.select().from(donationCenters);
+  
+  const centerStats = await Promise.all(centers.map(async (center) => {
+    const [aptCount] = await db.select({ count: sql<number>`count(*)` }).from(appointments).where(eq(appointments.centerId, center.id));
+    const [donCount] = await db.select({ count: sql<number>`count(*)` }).from(donations).where(eq(donations.centerId, center.id));
+    
+    return {
+      id: center.id,
+      name: center.name,
+      city: center.city,
+      appointmentCount: Number(aptCount?.count ?? 0),
+      donationCount: Number(donCount?.count ?? 0),
+      isActive: center.isActive,
+    };
+  }));
+  
+  return centerStats;
 }
 
 export async function toggleFacilityStatus(centerId: string, isActive: boolean) {
@@ -89,13 +136,13 @@ export async function getAllUsers(roleFilter?: string): Promise<UserItem[]> {
     .$dynamic();
 
   if (roleFilter && roleFilter !== "All") {
-    query = query.where(eq(user.role, roleFilter.toLowerCase() as "donor" | "staff" | "admin"));
+    query = query.where(eq(user.role, roleFilter.toLowerCase() as "donor" | "center" | "admin"));
   }
 
   return query.limit(100);
 }
 
-export async function updateUserRole(userId: string, newRole: "donor" | "staff" | "admin") {
+export async function updateUserRole(userId: string, newRole: "donor" | "center" | "admin") {
   const admin = await getCurrentAdminUser();
   if (!admin) throw new Error("Unauthorized");
 

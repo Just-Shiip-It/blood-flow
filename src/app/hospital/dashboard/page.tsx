@@ -8,7 +8,6 @@ import {
   TrendingUp, 
   Users,
   Package,
-  Snowflake,
   Truck,
   ArrowRight,
   Loader2
@@ -46,16 +45,24 @@ export default function HospitalDashboardPage() {
   }
 
   // Aggregate inventory by blood type for visualization
-  const bloodLevels = ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'].map(type => {
+  const bloodTypeUnits = ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'].map(type => {
     const typeInventory = inventory.filter(i => i.bloodType === type);
     const totalUnits = typeInventory.reduce((sum, i) => sum + i.unitsAvailable, 0);
-    const maxExpected = 50; // Assume 50 units is "full"
-    const level = Math.min(100, Math.round((totalUnits / maxExpected) * 100));
+    return { type, units: totalUnits };
+  });
+
+  // Calculate dynamic max for visualization (highest blood type gets 100%)
+  const maxUnits = Math.max(...bloodTypeUnits.map(b => b.units), 1);
+  
+  const bloodLevels = bloodTypeUnits.map(({ type, units }) => {
+    const level = Math.round((units / maxUnits) * 100);
+    // Critical: less than 50 units, Low: less than 100 units
+    const status = units < 50 ? 'critical' : units < 100 ? 'low' : 'good';
     return {
       type,
       level,
-      units: totalUnits,
-      status: level < 20 ? 'critical' : level < 40 ? 'low' : 'good',
+      units,
+      status,
       trend: 'stable' as const
     };
   });
@@ -132,22 +139,25 @@ export default function HospitalDashboardPage() {
                <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
                   <Users size={20} />
                </div>
+               <span className="text-amber-600 text-xs font-bold bg-amber-50 px-2 py-0.5 rounded-full">
+                  {stats?.pendingScreenings ?? 0} Pending
+               </span>
             </div>
-            <p className="text-3xl font-bold text-slate-900 mb-1">{stats?.todaysAppointments ?? 0}</p>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Appointments Today</p>
+            <p className="text-3xl font-bold text-slate-900 mb-1">{stats?.totalAppointments ?? 0}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Appointments</p>
          </div>
 
          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
             <div className="flex justify-between items-start mb-3">
-               <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
-                  <Activity size={20} />
+               <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                  <Droplet size={20} />
                </div>
-               <span className="text-slate-400 text-xs font-bold bg-slate-50 px-2 py-0.5 rounded-full">
-                  {stats?.pendingScreenings ?? 0} Pending
+               <span className="text-emerald-600 text-xs font-bold bg-emerald-50 px-2 py-0.5 rounded-full">
+                  {stats?.weekDonations ?? 0} This Week
                </span>
             </div>
-            <p className="text-3xl font-bold text-slate-900 mb-1">{stats?.completedToday ?? 0}</p>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Completed Today</p>
+            <p className="text-3xl font-bold text-slate-900 mb-1">{stats?.totalDonations ?? 0}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Donations</p>
          </div>
       </div>
 
@@ -226,7 +236,7 @@ export default function HospitalDashboardPage() {
                                   <AlertTriangle size={12} /> Low Inventory Alert
                               </span>
                           </div>
-                          <p className="text-sm font-bold text-slate-800 mb-2">{stats.criticalInventory} blood types at critical levels</p>
+                          <p className="text-sm font-bold text-slate-800 mb-2">{stats.criticalInventory} inventory items at low levels</p>
                           <div className="flex gap-2">
                                <button className="flex-1 bg-white border border-red-200 text-red-600 text-xs font-bold py-1.5 rounded-lg hover:bg-red-600 hover:text-white transition-colors">
                                   Request Restock
@@ -242,32 +252,6 @@ export default function HospitalDashboardPage() {
                       </div>
                     )}
                 </div>
-            </div>
-
-            {/* Environment Stats */}
-            <div className="bg-slate-900 p-6 rounded-3xl text-white shadow-lg relative overflow-hidden">
-                 <div className="absolute top-0 right-0 p-6 opacity-10">
-                    <Snowflake size={64} />
-                 </div>
-                 <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                    Facility Health
-                 </h3>
-                 <div className="grid grid-cols-2 gap-4">
-                     <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/5">
-                        <div className="flex items-center gap-2 text-blue-200 text-xs mb-1">
-                            <Snowflake size={12} /> Fridge A
-                        </div>
-                        <p className="text-xl font-mono font-bold">2.4°C</p>
-                        <p className="text-[10px] text-emerald-400">Optimal</p>
-                     </div>
-                     <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/5">
-                        <div className="flex items-center gap-2 text-blue-200 text-xs mb-1">
-                            <Snowflake size={12} /> Fridge B
-                        </div>
-                        <p className="text-xl font-mono font-bold">3.1°C</p>
-                        <p className="text-[10px] text-emerald-400">Optimal</p>
-                     </div>
-                 </div>
             </div>
          </div>
       </div>

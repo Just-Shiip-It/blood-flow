@@ -3,7 +3,6 @@ import { db } from "@/db";
 import {
   user,
   donationCenters,
-  staff,
   appointments,
   donations,
   healthScreenings,
@@ -40,12 +39,13 @@ const CENTERS_DATA = [
   { name: "MedLife Diagnostics", type: "center", address: "202 Health Park Ave", city: "Los Angeles", phone: "555-0105", email: "blood@medlifediag.com", amenities: ["Free Parking", "WiFi", "Kids Play Area"], rating: "4.5" },
 ];
 
-const STAFF_DATA = [
-  { name: "Dr. Sarah Smith", email: "sarah.smith@hospital.com", position: "Senior Phlebotomist" },
-  { name: "Dr. James Wilson", email: "james.wilson@hospital.com", position: "Lab Technician" },
-  { name: "Nurse Emily Chen", email: "emily.chen@hospital.com", position: "Registered Nurse" },
-  { name: "Dr. Michael Brown", email: "michael.brown@hospital.com", position: "Medical Officer" },
-  { name: "Nurse Olivia Davis", email: "olivia.davis@hospital.com", position: "Donor Care Specialist" },
+// Center Login Credentials (one per center)
+const CENTER_LOGINS = [
+  { name: "City Central Blood Bank", email: "center.citycentral@vitals.com" },
+  { name: "St. Mary's Hospital", email: "center.stmarys@vitals.com" },
+  { name: "University Clinic", email: "center.university@vitals.com" },
+  { name: "Red Cross Outpost Downtown", email: "center.redcross@vitals.com" },
+  { name: "MedLife Diagnostics", email: "center.medlife@vitals.com" },
 ];
 
 const BADGE_TYPES = [
@@ -92,30 +92,29 @@ export async function GET() {
     }
     console.log("   ✅ Admin ready.");
 
-    // --- 3. Seed Staff Users ---
-    console.log("👔 Seeding Staff Users...");
-    const staffUserIds: string[] = [];
-    for (let i = 0; i < STAFF_DATA.length; i++) {
-      const s = STAFF_DATA[i];
-      let existingStaff = await db.select().from(user).where(eq(user.email, s.email));
-      if (existingStaff.length === 0) {
-        await auth.api.signUpEmail({ body: { email: s.email, password: "Staff123!", name: s.name } });
-        await db.update(user).set({ role: "staff", isVerified: true }).where(eq(user.email, s.email));
-        existingStaff = await db.select().from(user).where(eq(user.email, s.email));
+    // --- 3. Seed Center Login Accounts ---
+    console.log("🏥 Seeding Center Login Accounts...");
+    const centerUserIds: string[] = [];
+    for (let i = 0; i < CENTER_LOGINS.length && i < centerIds.length; i++) {
+      const centerLogin = CENTER_LOGINS[i];
+      const centerId = centerIds[i];
+      
+      let existingCenter = await db.select().from(user).where(eq(user.email, centerLogin.email));
+      if (existingCenter.length === 0) {
+        await auth.api.signUpEmail({ body: { email: centerLogin.email, password: "Center123!", name: centerLogin.name } });
       }
-      if (existingStaff.length > 0) {
-        staffUserIds.push(existingStaff[0].id);
-        const existingStaffLink = await db.select().from(staff).where(eq(staff.userId, existingStaff[0].id));
-        if (existingStaffLink.length === 0) {
-          await db.insert(staff).values({
-            userId: existingStaff[0].id,
-            centerId: centerIds[i % centerIds.length],
-            position: s.position,
-          });
-        }
+      // Always update centerId to ensure it's properly linked
+      await db.update(user).set({ 
+        role: "center", 
+        centerId: centerId,
+        isVerified: true 
+      }).where(eq(user.email, centerLogin.email));
+      existingCenter = await db.select().from(user).where(eq(user.email, centerLogin.email));
+      if (existingCenter.length > 0) {
+        centerUserIds.push(existingCenter[0].id);
       }
     }
-    console.log(`   ✅ Staff ready: ${staffUserIds.length}`);
+    console.log(`   ✅ Center accounts ready: ${centerUserIds.length}`);
 
     // --- 4. Seed Donor Users ---
     console.log("🩸 Seeding Donor Users...");
@@ -160,14 +159,9 @@ export async function GET() {
         const pastDate = new Date();
         pastDate.setMonth(pastDate.getMonth() - randomInt(1, 24)); // 1-24 months ago
         const centerId = randomElement(centerIds);
-        const staffId = staffUserIds.length > 0 ? randomElement(staffUserIds) : undefined;
-
-        // Get staff record from staffUserIds which are user IDs
-        let staffRecordId: string | undefined;
-        if (staffId) {
-            const staffRecord = await db.select().from(staff).where(eq(staff.userId, staffId));
-            if (staffRecord.length > 0) staffRecordId = staffRecord[0].id;
-        }
+        // Find center user for this center
+        const centerIndex = centerIds.indexOf(centerId);
+        const centerUserId = centerUserIds[centerIndex] || undefined;
 
         const [apt] = await db.insert(appointments).values({
           donorId,
@@ -182,7 +176,7 @@ export async function GET() {
           donorId,
           appointmentId: apt.id,
           centerId,
-          staffId: staffRecordId,
+          processedBy: centerUserId,
           status: "completed",
           donatedAt: pastDate,
           volumeMl: randomInt(400, 500),
@@ -301,7 +295,7 @@ export async function GET() {
       message: `Seed completed in ${duration}s.`,
       stats: {
         centers: centerIds.length,
-        staff: staffUserIds.length,
+        centerAccounts: centerUserIds.length,
         donors: donorUserIds.length,
         appointments: appointmentCount,
         donations: donationCount,

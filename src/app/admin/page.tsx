@@ -14,7 +14,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getAdminDashboard, type AdminDashboardStats } from '@/actions/admin.actions';
+import { getAdminDashboard, getCenterStats, type AdminDashboardStats, type CenterStats } from '@/actions/admin.actions';
 
 // Simple SVG Chart Component
 const MiniTrendChart: React.FC<{ data: number[]; color: string }> = ({ data, color }) => {
@@ -47,12 +47,17 @@ const MiniTrendChart: React.FC<{ data: number[]; color: string }> = ({ data, col
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
+  const [centerStats, setCenterStats] = useState<CenterStats[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
-      const data = await getAdminDashboard();
-      setStats(data);
+      const [dashboardData, centersData] = await Promise.all([
+        getAdminDashboard(),
+        getCenterStats()
+      ]);
+      setStats(dashboardData);
+      setCenterStats(centersData);
       setLoading(false);
     }
     fetchData();
@@ -119,57 +124,57 @@ export default function AdminDashboardPage() {
                   <Droplet size={20} className="fill-current" />
                </div>
                <span className="flex items-center text-emerald-600 text-xs font-bold bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
-                  <ArrowUpRight size={14} className="mr-1" /> +5%
+                  <ArrowUpRight size={14} className="mr-1" /> Total
                </span>
             </div>
             <div className="mb-4">
-                <p className="text-3xl font-bold text-slate-900">8,200 L</p>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Volume (YTD)</p>
+                <p className="text-3xl font-bold text-slate-900">{((stats?.totalVolumeMl ?? 0) / 1000).toFixed(1)} L</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Volume Collected</p>
             </div>
             <MiniTrendChart data={donationTrend} color="#e11d48" />
          </div>
 
-         {/* Efficiency */}
+         {/* Pending Appointments */}
          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-4">
                <div className="p-2.5 bg-blue-50 rounded-xl text-blue-600">
                   <Clock size={20} />
                </div>
-               <span className="flex items-center text-blue-600 text-xs font-bold bg-blue-50 px-2 py-1 rounded-full border border-blue-100">
-                  <Activity size={14} className="mr-1" /> Stable
+               <span className="flex items-center text-amber-600 text-xs font-bold bg-amber-50 px-2 py-1 rounded-full border border-amber-100">
+                  {stats?.completedAppointments ?? 0} Completed
                </span>
             </div>
             <div className="mb-4">
-                <p className="text-3xl font-bold text-slate-900">45m</p>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Avg Processing</p>
+                <p className="text-3xl font-bold text-slate-900">{stats?.pendingAppointments ?? 0}</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Appointments</p>
             </div>
             <MiniTrendChart data={efficiencyTrend} color="#3b82f6" />
          </div>
 
-         {/* Critical Alerts */}
+         {/* Active Centers */}
          <div className="bg-linear-to-br from-slate-900 to-slate-800 p-6 rounded-2xl shadow-lg text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 p-6 opacity-10">
-                <AlertOctagon size={64} />
+                <Map size={64} />
             </div>
             <div className="relative z-10">
                 <div className="flex justify-between items-start mb-4">
-                   <div className="p-2.5 bg-white/10 rounded-xl text-rose-400 backdrop-blur-sm border border-white/10">
-                      <AlertOctagon size={20} />
+                   <div className="p-2.5 bg-white/10 rounded-xl text-emerald-400 backdrop-blur-sm border border-white/10">
+                      <Activity size={20} />
                    </div>
                 </div>
                 <div className="mb-2">
-                    <p className="text-4xl font-bold text-white">3</p>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Critical Alerts</p>
+                    <p className="text-4xl font-bold text-white">{stats?.activeCenters ?? 0}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Centers</p>
                 </div>
                 <p className="text-xs text-slate-400 mt-4 border-t border-slate-700 pt-3">
-                   Requires immediate attention in <span className="text-white font-bold">Midwest Region</span>.
+                   <span className="text-white font-bold">{stats?.appointmentsThisMonth ?? 0}</span> appointments this month.
                 </p>
             </div>
          </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-         {/* Regional Supply Matrix */}
+         {/* Center Activity Overview */}
          <div className="xl:col-span-2 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -177,8 +182,8 @@ export default function AdminDashboardPage() {
                         <Map size={20} />
                     </div>
                     <div>
-                        <h3 className="font-bold text-slate-900">Regional Supply Network</h3>
-                        <p className="text-xs text-slate-500">Live distribution levels by territory</p>
+                        <h3 className="font-bold text-slate-900">Center Activity Overview</h3>
+                        <p className="text-xs text-slate-500">Appointments and donations by center</p>
                     </div>
                 </div>
                 <button className="text-slate-400 hover:text-slate-600">
@@ -187,46 +192,41 @@ export default function AdminDashboardPage() {
             </div>
             
             <div className="p-6 grid gap-6">
-                {[
-                    { region: 'North America (East)', status: 'Optimal', load: 85, critical: [] as string[] },
-                    { region: 'North America (West)', status: 'Stable', load: 62, critical: ['O-'] },
-                    { region: 'Europe (Central)', status: 'Low Supply', load: 35, critical: ['O-', 'A-'] },
-                    { region: 'Asia Pacific (Hub)', status: 'Optimal', load: 78, critical: [] as string[] },
-                ].map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-6">
+                {centerStats.length > 0 ? centerStats.map((center) => {
+                    const maxAppts = Math.max(...centerStats.map(c => c.appointmentCount), 1);
+                    const loadPercent = Math.round((center.appointmentCount / maxAppts) * 100);
+                    const status = center.isActive ? (loadPercent > 70 ? 'High Activity' : loadPercent > 30 ? 'Normal' : 'Low Activity') : 'Inactive';
+                    
+                    return (
+                    <div key={center.id} className="flex items-center gap-6">
                         <div className="w-48 shrink-0">
-                            <p className="font-bold text-sm text-slate-900">{item.region}</p>
+                            <p className="font-bold text-sm text-slate-900">{center.name}</p>
                             <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-1">
-                                <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'Optimal' ? 'bg-emerald-500' : item.status === 'Stable' ? 'bg-blue-500' : 'bg-amber-500'}`}></span>
-                                {item.status}
+                                <span className={`w-1.5 h-1.5 rounded-full ${!center.isActive ? 'bg-slate-400' : status === 'High Activity' ? 'bg-emerald-500' : status === 'Normal' ? 'bg-blue-500' : 'bg-amber-500'}`}></span>
+                                {status}
                             </p>
                         </div>
                         <div className="flex-1">
                             <div className="flex justify-between mb-1.5">
-                                <span className="text-xs font-bold text-slate-400">Capacity</span>
-                                <span className="text-xs font-bold text-slate-700">{item.load}%</span>
+                                <span className="text-xs font-bold text-slate-400">Appointments</span>
+                                <span className="text-xs font-bold text-slate-700">{center.appointmentCount}</span>
                             </div>
                             <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                                 <div 
-                                    className={`h-full rounded-full ${item.load < 40 ? 'bg-amber-400' : 'bg-slate-900'}`} 
-                                    style={{ width: `${item.load}%` }}
+                                    className={`h-full rounded-full ${!center.isActive ? 'bg-slate-400' : 'bg-slate-900'}`} 
+                                    style={{ width: `${loadPercent}%` }}
                                 ></div>
                             </div>
                         </div>
-                        <div className="w-48 flex justify-end gap-2">
-                             {item.critical.length > 0 ? (
-                                 item.critical.map(type => (
-                                     <span key={type} className="px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-bold border border-red-200">
-                                         {type} Critical
-                                     </span>
-                                 ))) : (
-                                 <span className="px-2 py-1 rounded bg-slate-50 text-slate-400 text-xs font-bold border border-slate-100">
-                                     All Types OK
-                                 </span>
-                             )}
+                        <div className="w-32 text-right">
+                            <span className="px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+                                {center.donationCount} Donations
+                            </span>
                         </div>
                     </div>
-                ))}
+                )}) : (
+                    <p className="text-slate-500 text-center py-4">No centers found</p>
+                )}
             </div>
          </div>
 

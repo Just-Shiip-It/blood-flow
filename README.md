@@ -99,14 +99,19 @@ LifeFlow is a comprehensive, open-source blood donation management system design
 - Email: `admin@vitals.com`
 - Password: `Admin123!`
 
-**Hospital Staff**
+**Center Portal** (Each center has its own login)
 
-- Email: `sarah.smith@hospital.com`
-- Password: `Staff123!`
+| Center                  | Email                           | Password     |
+| ----------------------- | ------------------------------- | ------------ |
+| City Central Blood Bank | `center.citycentral@vitals.com` | `Center123!` |
+| St. Mary's Hospital     | `center.stmarys@vitals.com`     | `Center123!` |
+| University Clinic       | `center.university@vitals.com`  | `Center123!` |
+| Red Cross Outpost       | `center.redcross@vitals.com`    | `Center123!` |
+| MedLife Diagnostics     | `center.medlife@vitals.com`     | `Center123!` |
 
 **Donor Portal**
 
-- Register a new account or use `alex.mercer@example.com` / `Donor123!`
+- Register a new account or use `alice.smith0@example.com` / `Donor123!`
 
 ## 🤝 Contributing
 

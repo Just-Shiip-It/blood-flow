@@ -45,7 +45,7 @@ export function useAuth() {
         case UserRole.ADMIN:
           router.push("/admin");
           break;
-        case UserRole.STAFF:
+        case UserRole.CENTER:
           router.push("/hospital/dashboard");
           break;
         default:
